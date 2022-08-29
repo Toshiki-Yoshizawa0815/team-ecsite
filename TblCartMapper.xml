@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jp.co.internous.sunflower.model.mapper.TblCartMapper">
+
+	<select id="findByUserIdAndGetCart" resultType="jp.co.internous.sunflower.model.domain.dto.CartDto">
+		SELECT
+			c.id,
+			p.image_full_path,
+			p.product_name,
+			p.price,
+			c.product_count,
+			(c.product_count * p.price) subtotal
+		FROM
+			tbl_cart c
+		JOIN
+			mst_product p
+		ON
+			c.product_id = p.id
+		WHERE
+			user_id = #{userId}
+		ORDER BY
+			c.updated_at DESC, c.created_at DESC;
+	</select>
+
+
+</mapper>

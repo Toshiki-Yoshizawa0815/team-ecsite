@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8" />
+
+<link href="/css/reset.css" th:href="@{/css/reset.css}" rel="stylesheet" />
+<link href="/css/style.css" th:href="@{/css/style.css}" rel="stylesheet" />
+
+<script src="http://code.jquery.com/jquery-3.4.1.min.js"></script>
+
+<title>Sunflower Web</title>
+</head>
+<body>
+
+<header th:insert="fragments/page_header::pageHeader"></header>
+
+<input type="hidden" id="hiddenUserId" th:value="${loginSession.tempId}" />
+
+<main>
+	<div class="container cart">
+		<h2>カート</h2>
+		
+		<div class="noData hidden">
+			<p class="info">カート情報はありません。</p>
+		</div>
+
+		<div class="cartList">
+			<table>
+				<tr>
+					<th>選択</th><th>画像</th><th>商品名</th><th>価格(円)</th><th>個数</th><th>小計(円)</th>
+				</tr>
+
+				<tr th:each="item: ${cartList}" class="carts">
+					<td>
+						<input type="checkbox" name="checkid" class="checkList" th:value="${item.id}" />
+					</td>
+					<td class="image">
+						<img class="itemImage" th:src="${item.imageFullPath}" alt="" />
+					</td>
+					<td th:text="${item.productName}" />
+					<td class="number" th:text="${item.price}" />
+					<td class="number" th:text="${item.productCount}" />
+					<td class="number" th:text="${item.subtotal}" />
+				</tr>
+				
+				<tr>
+					<td class="totalArea"></td>
+					<td class="totalArea"></td>
+					<td class="totalArea">合計(円)</td>
+					<td class="totalArea"></td>
+					<td class="totalArea" th:text="|${#aggregates.sum(cartList.![productCount])}|" />
+					<td class="totalArea" th:text="|${#aggregates.sum(cartList.![subtotal])}|" />
+				</tr>
+					
+					
+			</table>
+			<div class="buttonArea">
+				<button class="delete" disabled>削除</button>
+				<form action="/sunflower/settlement/">
+					<button class="purchase" type="submit">購入</button>
+				</form>
+			</div>
+		</div>
+	</div>
+</main>
+
+<script>
+$(() => {
+	$('button.delete').on('click', deleteCartList);
+	$('button.purchase').on('click', userIdCheck);
+
+	$('.checkList').on('change', changeDisable);
+
+	// ${cartList}が空だった場合に「カート情報はありません」と表示させる。
+	let cartHiddien = $('.carts');
+
+	if(cartHiddien.length > 0){
+        if(!$(".noData").hasClass("hidden")){
+			$(".noData").addClass("hidden");
+   		}
+	}else{
+		$(".cartList").empty();
+        $(".noData").removeClass("hidden");
+    }
+
+});
+
+// チェックボックスにチェックを入れると削除ボタンが活性化する。
+let changeDisable = (event) => {
+	let checkList = $('.checkList');
+	let disabled = true;
+	for (let check of checkList) {
+		if($(check).prop('checked')) {
+			disabled = false;
+			break;
+		}
+	}
+	$("button.delete").prop("disabled", disabled);
+			
+}
+
+let deleteCartList = (event) => {
+	event.preventDefault();
+
+	const arr = [];
+	const chk1 = document.getElementsByName('checkid');
+
+	for (let i = 0; i < chk1.length; i++) {
+   		if (chk1[i].checked) {
+       	arr.push(chk1[i].value);
+   		}
+   	}
+
+	console.log(arr);
+
+	let jsonString = {
+		id: arr
+	};
+
+	console.log(jsonString);
+
+	$.ajax({
+		type: 'POST',
+		url: '/sunflower/cart/delete',
+		data: JSON.stringify(jsonString),
+		contentType: 'application/json',
+		scriptCharset: 'utf-8'
+	})
+	.then((result) => {
+		window.location.reload();
+	}, () => {
+		console.error('Error: ajax connection faild.');
+	});
+
+}
+
+let userIdCheck = (event) => {
+	
+	let userId = $('#hiddenUserId').val();
+	if (userId <= 0 && isEmpty($('#hiddenUserName').val())) {
+		alert('ログインしてください。');
+		event.preventDefault();
+	}
+}
+
+
+</script>
+
+</body>
+</html>
